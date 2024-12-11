@@ -1,110 +1,78 @@
-// Variabili per lo Snake
-let snake = [];
-let snakeLength = 1;
-let snakeDir = [1, 0]; // Direzione iniziale (destra)
-
-// Variabili per il cibo
-let food;
-let gridSize = 20; // Dimensione di ogni cella
+let snakeX, snakeY; // Coordinate della testa del serpente
+let foodX, foodY;   // Coordinate del cibo
+let directionX = 1, directionY = 0; // Direzione del movimento
+let gridSize = 20;  // Dimensione della griglia
+let snakeLength = 1; // Lunghezza (cresce visivamente)
+let gameSpeed = 10;  // Velocità del gioco
+let frameCounter = 0; // Contatore dei frame
 
 function setup() {
-  createCanvas(400, 400);
-  frameRate(10); // Velocità del gioco
-
-  // Posizione iniziale dello Snake
-  snake.push(createVector(floor(width / 2 / gridSize), floor(height / 2 / gridSize)));
-
-  // Genera il primo cibo
-  spawnFood();
+  createCanvas(400, 400); // Creazione del canvas
+  snakeX = width / 2; // Posizione iniziale del serpente
+  snakeY = height / 2;
+  generateFood(); // Posiziona il primo cibo
 }
 
 function draw() {
-  background(220);
+  background(220); // Sfondo grigio chiaro
+
+  // Controlla la velocità del gioco
+  frameCounter++;
+  if (frameCounter % gameSpeed === 0) {
+    moveSnake(); // Muove il serpente solo a intervalli regolari
+  }
 
   // Disegna il cibo
-  fill(255, 0, 0);
-  rect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+  fill(255, 0, 0); // Rosso
+  rect(foodX, foodY, gridSize, gridSize);
 
-  // Aggiorna la posizione dello Snake
-  updateSnake();
-
-  // Controlla le collisioni
-  checkCollisions();
-
-  // Disegna lo Snake
-  fill(0);
-  for (let segment of snake) {
-    rect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+  // Disegna il serpente
+  fill(0); // Nero
+  for (let i = 0; i < snakeLength; i++) {
+    rect(snakeX - i * gridSize * directionX, 
+         snakeY - i * gridSize * directionY, 
+         gridSize, gridSize);
   }
 }
 
-function updateSnake() {
-  // Calcola la nuova posizione della testa
-  let newHead = createVector(
-    snake[0].x + snakeDir[0],
-    snake[0].y + snakeDir[1]
-  );
+// Muove il serpente e controlla collisioni
+function moveSnake() {
+  // Aggiorna la posizione del serpente
+  snakeX += directionX * gridSize;
+  snakeY += directionY * gridSize;
 
-  // Aggiunge la nuova testa all'inizio dell'array
-  snake.unshift(newHead);
+  // Controlla se il serpente mangia il cibo
+  if (snakeX === foodX && snakeY === foodY) {
+    snakeLength++; // Incrementa la lunghezza del serpente (visivamente)
+    generateFood(); // Genera nuovo cibo
+  }
 
-  // Controlla se lo Snake ha mangiato il cibo
-  if (newHead.x === food.x && newHead.y === food.y) {
-    spawnFood(); // Genera un nuovo cibo
-    snakeLength++; // Aumenta la lunghezza dello Snake
-  } else {
-    // Rimuove l'ultimo segmento se non ha mangiato il cibo
-    while (snake.length > snakeLength) {
-      snake.pop();
-    }
+  // Controlla se il serpente colpisce il bordo
+  if (snakeX < 0 || snakeX >= width || snakeY < 0 || snakeY >= height) {
+    noLoop(); // Termina il gioco
+    console.log("Game Over!");
   }
 }
 
-function spawnFood() {
-  // Genera una nuova posizione per il cibo
-  food = createVector(floor(random(width / gridSize)), floor(random(height / gridSize)));
-
-  // Assicura che il cibo non compaia sopra lo Snake
-  for (let segment of snake) {
-    if (food.equals(segment)) {
-      spawnFood();
-      return;
-    }
-  }
-}
-
-function checkCollisions() {
-  // Controlla se lo Snake esce dai bordi
-  let head = snake[0];
-  if (head.x < 0 || head.y < 0 || head.x >= width / gridSize || head.y >= height / gridSize) {
-    resetGame();
-  }
-
-  // Controlla se lo Snake si morde
-  for (let i = 1; i < snake.length; i++) {
-    if (head.equals(snake[i])) {
-      resetGame();
-    }
-  }
-}
-
-function resetGame() {
-  // Ripristina le variabili del gioco
-  snake = [createVector(floor(width / 2 / gridSize), floor(height / 2 / gridSize))];
-  snakeLength = 1;
-  snakeDir = [1, 0];
-  spawnFood();
-}
-
+// Cambia la direzione del serpente
 function keyPressed() {
-  // Cambia la direzione dello Snake in base alla freccia premuta
-  if (keyCode === LEFT_ARROW && snakeDir[0] === 0) {
-    snakeDir = [-1, 0];
-  } else if (keyCode === RIGHT_ARROW && snakeDir[0] === 0) {
-    snakeDir = [1, 0];
-  } else if (keyCode === UP_ARROW && snakeDir[1] === 0) {
-    snakeDir = [0, -1];
-  } else if (keyCode === DOWN_ARROW && snakeDir[1] === 0) {
-    snakeDir = [0, 1];
+  if (keyCode === UP_ARROW && directionY === 0) {
+    directionX = 0;
+    directionY = -1;
+  } else if (keyCode === DOWN_ARROW && directionY === 0) {
+    directionX = 0;
+    directionY = 1;
+  } else if (keyCode === LEFT_ARROW && directionX === 0) {
+    directionX = -1;
+    directionY = 0;
+  } else if (keyCode === RIGHT_ARROW && directionX === 0) {
+    directionX = 1;
+    directionY = 0;
   }
+}
+
+// Genera il cibo in una posizione casuale
+function generateFood() {
+  foodX = floor(random(width / gridSize)) * gridSize;
+  foodY = floor(random(height / gridSize)) * gridSize;
 }
